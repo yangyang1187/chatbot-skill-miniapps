@@ -52,7 +52,7 @@ def generate_prompt(prompt):
         "messages": [
             {
                 "role": "user",
-                "content": f"### Task:\nPlease create an image generation prompt to fit this brief:\n\"[{prompt}]\"\nPlease add more detail and nuance to the prompt and please ONLY reply with the prompt and nothing else. DO NOT include \"Prompt: \" or any other precursor, just the prompt itself, otherwise your comments also get used in the image generation."
+                "content": f"### Task:\nPlease create an english image generation prompt to fit this brief:\n\"[{prompt}]\"\nPlease add more detail and nuance to the prompt and please ONLY reply with the prompt and nothing else. DO NOT include \"Prompt: \" or any other precursor, just the prompt itself, otherwise your comments also get used in the image generation."
             }
         ],
         "params": {
