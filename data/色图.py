@@ -39,7 +39,7 @@ async def main():
             # 核对URL是否有效
             if await is_url_valid(image_url):
                 markdown_image_link = f"![Anime Image]({image_url})"  # 转换为 Markdown 格式
-                print(markdown_image_link)  # 打印 Markdown 图片链接
+                print(markdown_image_link, end='')  # 打印 Markdown 图片链接
                 return  # 成功获取有效链接，退出
 
         attempt += 1
