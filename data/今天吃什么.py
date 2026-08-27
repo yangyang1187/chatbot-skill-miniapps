@@ -1,26 +1,25 @@
-import requests
+"""今天吃什么（多源）：aa1 → 本地菜库"""
+import random
 
-def get_meal_suggestion():
-    """
-    获取今天吃什么的建议。
+from _multisource import try_sources, fetch_json, emit
 
-    Returns:
-        str: 今天的饮食建议，如果请求失败则返回错误信息。
-    """
-    url = "https://zj.v.api.aa1.cn/api/eats/"
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # 确保请求成功
-        data = response.json()
-        
-        # 获取饮食建议
-        if data.get("code") == 200:
-            suggestion = data.get("mealwhat", "没有找到今天的饮食建议。")
-            return f"今天吃什么？ {suggestion}"
-        else:
-            return f"API Error: {data.get('msg', 'Unknown error')}"
-    except requests.RequestException as e:
-        return f"请求失败: {str(e)}"
+LOCAL_MEALS = [
+    "火锅", "麻辣烫", "烧烤", "饺子", "面条", "盖浇饭", "黄焖鸡米饭", "螺蛳粉",
+    "兰州拉面", "沙县小吃", "肯德基", "麦当劳", "寿司", "韩式炸鸡", "酸菜鱼",
+    "小龙虾", "冒菜", "串串香", "过桥米线", "肉夹馍", "煎饼果子", "炒饭", "披萨",
+]
+
+
+def src_aa1():
+    data = fetch_json("https://zj.v.api.aa1.cn/api/eats/")
+    if data.get("code") == 200:
+        return f"今天吃什么？ {data.get('mealwhat', '')}"
+
+
+def src_local():
+    meal = random.choice(LOCAL_MEALS)
+    return f"今天吃什么？ 今天吃{meal}！"
+
 
 if __name__ == "__main__":
-    print(get_meal_suggestion())
+    emit(try_sources([src_aa1, src_local]))

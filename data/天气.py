@@ -1,118 +1,61 @@
-import httpx
-import os
+"""天气查询（多源）：alapi(需token) → wttr.in → open-meteo(免key)"""
 import sys
-import asyncio
-import json
+import os
+import urllib.parse
 
-# 可在此填入自己的 alapi token；留空则自动降级为免费接口（信息较简略）
+from _multisource import try_sources, fetch_json, fetch_text, emit
+
 ALAPI_TOKEN = os.environ.get("ALAPI_TOKEN", "")
 
-
-async def get_weather_free(city: str):
-    """免费天气接口（wttr.in），无需 token，返回简略信息。"""
-    import urllib.parse
-    api_url = f"https://wttr.in/{urllib.parse.quote(city)}"
-    params = {"format": "%l: %C %t (体感 %f) 湿度 %h 风 %w", "lang": "zh"}
-    async with httpx.AsyncClient(timeout=15) as client:
-        response = await client.get(api_url, params=params)
-        response.raise_for_status()
-        text = response.text.strip()
-        if text:
-            return text
-        return "获取天气信息失败，请检查城市名称或稍后再试。"
+WMO_CODES = {0: "晴", 1: "大部晴朗", 2: "多云", 3: "阴", 45: "雾", 48: "冻雾",
+             51: "毛毛雨", 53: "毛毛雨", 55: "强毛毛雨", 61: "小雨", 63: "中雨",
+             65: "大雨", 66: "冻雨", 67: "强冻雨", 71: "小雪", 73: "中雪", 75: "大雪",
+             77: "雪粒", 80: "阵雨", 81: "强阵雨", 82: "暴雨", 85: "阵雪", 86: "强阵雪",
+             95: "雷暴", 96: "雷暴伴冰雹", 99: "强雷暴伴冰雹"}
 
 
-async def get_weather(city: str, raw_data: bool = False):
+def src_alapi(city):
     if not ALAPI_TOKEN:
-        return await get_weather_free(city)
+        return None
+    data = fetch_json("https://v3.alapi.cn/api/tianqi", {"city": city, "token": ALAPI_TOKEN})
+    if data.get("code") != 200:
+        return None
+    d = data["data"]
+    aqi = d.get("aqi", {})
+    return (f"城市：{d.get('city', city)}\n日期：{d.get('date', 'N/A')}\n"
+            f"天气：{d.get('weather', 'N/A')} {d.get('temp', 'N/A')}℃\n"
+            f"温度范围：{d.get('min_temp', 'N/A')} - {d.get('max_temp', 'N/A')}℃\n"
+            f"湿度：{d.get('humidity', 'N/A')}%  风：{d.get('wind', '')}{d.get('wind_power', '')}级\n"
+            f"空气质量：{aqi.get('air_level', 'N/A')} (AQI {aqi.get('air', 'N/A')})")
 
-    api_url = "https://v3.alapi.cn/api/tianqi"
-    params = {
-        "city": city,
-        "token": ALAPI_TOKEN  # 支持环境变量 ALAPI_TOKEN 或直接在此填写
-    }
 
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(api_url, params=params)
-            response.raise_for_status()
-            data = response.json()
-            
-            if data.get('code') == 200:
-                if raw_data:
-                    # 返回原始API数据，格式化为可读的JSON
-                    return json.dumps(data['data'], indent=4, ensure_ascii=False)
-                else:
-                    # 提取并格式化天气信息
-                    day_data = data['data']
-                    aqi_data = day_data.get('aqi', {})  # 空气质量数据
-                    index_data = day_data.get('index', [])  # 生活指数数据
-                    alarm_data = day_data.get('alarm', [])  # 气象预警数据
-                    
-                    # 解析小时数据，获取白天和夜晚信息
-                    day_info = next((h for h in day_data['hour'] if int(h['time'][11:13]) in range(6, 19)), {})
-                    night_info = next((h for h in day_data['hour'] if int(h['time'][11:13]) not in range(6, 19)), {})
+def src_wttr(city):
+    text = fetch_text(f"https://wttr.in/{urllib.parse.quote(city)}",
+                      {"format": "%l: %C %t (体感 %f) 湿度 %h 风 %w", "lang": "zh"})
+    return text if text and text != "Sorry" else None
 
-                    # 格式化输出天气信息
-                    weather_info = (
-                        f"省份：{day_data.get('province', 'N/A')}\n"
-                        f"城市：{day_data.get('city', 'N/A')}\n"
-                        f"日期：{day_data.get('date', 'N/A')}\n"
-                        f"白天天气：{day_data.get('weather', 'N/A')}\n"
-                        f"白天温度：{day_data.get('temp', 'N/A')}℃\n"
-                        f"最低温度：{day_data.get('min_temp', 'N/A')}℃\n"
-                        f"最高温度：{day_data.get('max_temp', 'N/A')}℃\n"
-                        f"白天风向：{day_data.get('wind', 'N/A')}\n"
-                        f"白天风力等级：{day_data.get('wind_power', 'N/A')}\n"
-                        f"夜晚天气：{night_info.get('wea', 'N/A')}\n"
-                        f"夜晚温度：{night_info.get('temp', 'N/A')}℃\n"
-                        f"夜晚风向：{night_info.get('wind', 'N/A')}\n"
-                        f"夜晚风力等级：{night_info.get('wind_level', 'N/A')}\n"
-                        f"湿度：{day_data.get('humidity', 'N/A')}\n"
-                        f"能见度：{day_data.get('visibility', 'N/A')}\n"
-                        f"气压：{day_data.get('pressure', 'N/A')}hPa\n"
-                        f"空气质量指数：{aqi_data.get('air', 'N/A')}\n"
-                        f"空气质量级别：{aqi_data.get('air_level', 'N/A')}\n"
-                        f"PM2.5：{aqi_data.get('pm25', 'N/A')}\n"
-                        f"PM10：{aqi_data.get('pm10', 'N/A')}\n"
-                        f"降水量：{day_data.get('rain', 'N/A')}mm\n"
-                        f"日出时间：{day_data.get('sunrise', 'N/A')}\n"
-                        f"日落时间：{day_data.get('sunset', 'N/A')}\n"
-                    )
 
-                    # 添加生活指数
-                    if index_data:
-                        weather_info += "生活指数：\n"
-                        for idx in index_data:
-                            weather_info += f"  {idx.get('name', 'N/A')} ({idx.get('level', 'N/A')})：{idx.get('content', 'N/A')}\n"
+def src_open_meteo(city):
+    geo = fetch_json("https://geocoding-api.open-meteo.com/v1/search",
+                     {"name": city, "count": 1, "language": "zh"})
+    results = geo.get("results")
+    if not results:
+        return None
+    loc = results[0]
+    wx = fetch_json("https://api.open-meteo.com/v1/forecast", {
+        "latitude": loc["latitude"], "longitude": loc["longitude"],
+        "current": "temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m",
+        "timezone": "auto"})
+    cur = wx["current"]
+    desc = WMO_CODES.get(cur.get("weather_code"), "未知")
+    return (f"{loc.get('name', city)}: {desc} {cur['temperature_2m']}°C "
+            f"湿度 {cur['relative_humidity_2m']}% 风速 {cur['wind_speed_10m']}km/h")
 
-                    # 添加气象预警
-                    if alarm_data:
-                        weather_info += "气象预警：\n"
-                        for alarm in alarm_data:
-                            weather_info += f"  {alarm.get('title', 'N/A')} ({alarm.get('level', 'N/A')})：{alarm.get('content', 'N/A')}\n"
-
-                    return weather_info
-            else:
-                return f"请求失败：{data.get('msg', '未知错误')}"
-                
-        except Exception as e:
-            return f"发生异常：{str(e)}"
-
-async def main():
-    # 解析命令行参数
-    if len(sys.argv) > 1:
-        city = sys.argv[1]
-        # 检查是否提供了“原始数据”作为第二个参数
-        raw_data = len(sys.argv) > 2 and sys.argv[2] == "原始数据"
-    else:
-        # 默认查询北京的格式化天气信息
-        city = "北京"
-        raw_data = False
-    
-    # 调用天气查询函数
-    weather_info = await get_weather(city, raw_data=raw_data)
-    print(weather_info)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    city = sys.argv[1].strip() if len(sys.argv) > 1 and sys.argv[1].strip() else "北京"
+    emit(try_sources([
+        lambda: src_alapi(city),
+        lambda: src_wttr(city),
+        lambda: src_open_meteo(city),
+    ]))

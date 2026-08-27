@@ -1,45 +1,35 @@
-import requests
-import json
+"""kfc 疯狂星期四文案（多源）：ahfi → qqsuu → 本地语料"""
+import random
 
-def get_kfc_text(type="json"):
-    """
-    获取肯德基疯狂星期四文案。
+from _multisource import try_sources, fetch_json, fetch_text, emit
 
-    Args:
-        type: 返回数据类型，可选值为 "json" 或 "text"。默认为 "json"。
-
-    Returns:
-        如果 type 为 "json"，返回一个包含文案的字典。
-        如果 type 为 "text"，返回文案字符串。
-        如果请求失败，返回 None。
-    """
-    url = f"https://api.ahfi.cn/api/kfcv50?type={type}"
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
-
-        if type == "json":
-            data = response.json()
-            if data and data.get("code") == 200:
-                return data.get("data", {}).get("copywriting")
-            else:
-                return None  # Or handle the error as needed, e.g., print(data.get("msg"))
-        elif type == "text":
-            return response.text
-        else:
-            return None
-
-    except requests.exceptions.RequestException as e:
-        print(f"Error during request: {e}")
-        return None
-
-# Example usage:
-text = get_kfc_text()
-if text:
-    print(text)
-
-text_as_text = get_kfc_text(type="text")
-if text_as_text:
-    print(text_as_text)
+LOCAL_KFC = [
+    "今天疯狂星期四，谁请我吃？",
+    "今天是疯狂星期四，我看到你朋友圈发的旅游照片了，很漂亮，我这边建议你直接V我50，我帮你去现场看。",
+    "疯狂星期四，转发这条消息给你的朋友，你就会失去这个朋友。",
+    "听说今天是疯狂星期四，我掐指一算，你五行缺我，命里缺50。",
+    "今天是疯狂星期四，别问我为什么知道，因为肯德基已经给我发了请柬。",
+    "疯狂星期四到了，我看了看我的钱包，又看了看我的胃，最后决定：去你那里吃。",
+    "世情薄，人情恶，雨送黄昏花易落。今天是疯狂星期四，V我50，抚慰我脆弱的心。",
+    "我本是显赫世家的公子，却被诡计多端的奸人所害！家人弃我！师门逐我！甚至断我灵脉！重生一世，今天肯德基疯狂星期四！谁请我吃？",
+]
 
 
+def src_ahfi():
+    text = fetch_text("https://api.ahfi.cn/api/kfcv50")
+    if text and "疯狂" in text:
+        return text
+
+
+def src_qqsuu():
+    data = fetch_json("https://api.qqsuu.cn/api/dm-kfc")
+    if data.get("code") == 200:
+        return data["data"].get("content")
+
+
+def src_local():
+    return random.choice(LOCAL_KFC)
+
+
+if __name__ == "__main__":
+    emit(try_sources([src_ahfi, src_qqsuu, src_local]))

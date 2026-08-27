@@ -75,6 +75,28 @@ python3 tools/run_miniapp.py <仓库路径> <命令名> [参数]
 - ✅ 60 秒超时、结构化错误输出
 - ✅ `sys.executable` 自适应解释器
 
+## 多源容灾（自动 fallback）
+
+每个命令配置 2-3 个数据源，按顺序自动切换，主源挂了用户无感知：
+
+| 命令 | 源 1 | 源 2 | 源 3 |
+|---|---|---|---|
+| 天气 | alapi(需token) | wttr.in | open-meteo |
+| 猫猫图片 | thecatapi | cataas | - |
+| 二次元图片 | dmoe | jitsu | - |
+| 随机头像 | q.qlogo | jitsu | - |
+| 必应壁纸 | Bing 官方 | biturl 镜像 | - |
+| 励志英语 | zenquotes | qqsuu | - |
+| 舔狗日记 | 60s API | qqsuu | - |
+| 骚话 | hitokoto | 60s 一言 | - |
+| 今天吃什么 | aa1 | - | 本地菜库 |
+| kfc | ahfi | qqsuu | 本地语料 |
+| 塔罗牌 | oiapi | - | 本地22张大阿卡纳 |
+| 色图(搜图) | safebooru | jitsu | dmoe |
+
+文本类命令（弱智吧问答/藏头诗/运气/摸头）为纯本地实现，天然永不失效。
+公共库：`data/_multisource.py`，新增数据源只需加一个函数进 `try_sources` 列表。
+
 ⚠️ 仍请注意：`data/` 目录下的脚本会以当前用户权限执行，请勿放入来源不明的脚本。
 
 ## 目录结构

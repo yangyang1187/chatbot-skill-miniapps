@@ -1,20 +1,16 @@
-import requests
+"""骚话/随机一句话（多源）：hitokoto → 60s 一言"""
+from _multisource import try_sources, fetch_text, fetch_json, emit
 
 
-def get_random_sexy_text():
-    # 原 vvhan 骚话接口已失效，改用一言 API 随机句子
-    url = "https://v1.hitokoto.cn/?encode=text"
-    try:
-        response = requests.get(url, timeout=15)
-        response.raise_for_status()
-        return response.text.strip()
-    except Exception as e:
-        return f"请求失败: {e}"
+def src_hitokoto():
+    return fetch_text("https://v1.hitokoto.cn/", {"encode": "text"}) or None
 
 
-def main():
-    print(get_random_sexy_text())
+def src_60s_yiyan():
+    data = fetch_json("https://60s-api.viki.moe/v2/yiyan")
+    if data.get("code") == 200:
+        return data["data"].get("hitokoto")
 
 
 if __name__ == "__main__":
-    main()
+    emit(try_sources([src_hitokoto, src_60s_yiyan]))

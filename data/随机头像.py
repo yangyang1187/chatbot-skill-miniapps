@@ -1,18 +1,17 @@
-import requests
+"""随机头像（多源）：qlogo → jitsu"""
+import random
+
+from _multisource import try_sources, emit_image
 
 
-def get_anime_avatar_url():
-    # 用随机 QQ 号从 QQ 头像服务取动漫头像（URL 本身就是图片地址）
-    import random
+def src_qlogo():
     qq = random.randint(10000, 999999999)
     return f"https://q.qlogo.cn/g?b=qq&nk={qq}&s=640"
 
 
-def main():
-    avatar_url = get_anime_avatar_url()
-    if avatar_url:
-        print(f"![Anime Avatar]({avatar_url})")
+def src_jitsu():
+    return "https://moe.jitsu.top/img/"
 
 
 if __name__ == "__main__":
-    main()
+    emit_image(try_sources([src_qlogo, src_jitsu]), "Anime Avatar")

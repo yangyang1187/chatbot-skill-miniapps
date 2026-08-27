@@ -1,26 +1,16 @@
-import requests
-#Microsoft copilot提交的插件
-def get_cat_image_url():
-    api_url = "https://api.thecatapi.com/v1/images/search?limit=1"
+"""猫猫图片（多源）：thecatapi → cataas"""
+from _multisource import try_sources, fetch_json, emit_image
 
-    try:
-        response = requests.get(api_url)
-        if response.status_code == 200:
-            data = response.json()
-            image_url = data[0]['url']
-            return image_url
-        else:
-            print("获取图片失败")
-            return None
-    except Exception as e:
-        print(f"发生错误: {e}")
-        return None
 
-def main():
-    image_url = get_cat_image_url()
-    if image_url:
-        markdown_image_link = f"![Cat Image]({image_url})"
-        print(markdown_image_link)
+def src_thecatapi():
+    data = fetch_json("https://api.thecatapi.com/v1/images/search", {"limit": 1})
+    if data:
+        return data[0].get("url")
+
+
+def src_cataas():
+    return "https://cataas.com/cat"
+
 
 if __name__ == "__main__":
-    main()
+    emit_image(try_sources([src_thecatapi, src_cataas]), "Cat Image")

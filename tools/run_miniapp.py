@@ -33,7 +33,8 @@ def main():
 
     if command == "--list":
         data_dir = os.path.join(repo, "data")
-        names = sorted(f[:-3] for f in os.listdir(data_dir) if f.endswith(".py") and f != "模板.py") if os.path.isdir(data_dir) else []
+        names = sorted(f[:-3] for f in os.listdir(data_dir)
+                       if f.endswith(".py") and f != "模板.py" and not f.startswith("_")) if os.path.isdir(data_dir) else []
         print(json.dumps({"ok": True, "commands": names}, ensure_ascii=False))
         return 0
 

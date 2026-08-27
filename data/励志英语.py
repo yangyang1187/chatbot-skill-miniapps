@@ -1,18 +1,20 @@
-import requests
+"""励志英语（多源）：zenquotes → qqsuu"""
+from _multisource import try_sources, fetch_json, emit
 
 
-def get_daily_english():
-    url = "https://zenquotes.io/api/today"
-    try:
-        response = requests.get(url, timeout=15)
-        response.raise_for_status()
-        data = response.json()[0]
-        en_content = data.get("q", "未获取到英文内容")
-        author = data.get("a", "")
-        return f"英文: {en_content}\n作者: {author}"
-    except requests.RequestException as e:
-        return f"请求失败: {str(e)}"
+def src_zenquotes():
+    data = fetch_json("https://zenquotes.io/api/today")
+    if data:
+        item = data[0]
+        return f"英文: {item.get('q', '')}\n作者: {item.get('a', '')}"
+
+
+def src_qqsuu():
+    data = fetch_json("https://api.qqsuu.cn/api/dm-yiyan")
+    if data.get("code") == 200:
+        d = data.get("data", {})
+        return f"英文: {d.get('content', '')}"
 
 
 if __name__ == "__main__":
-    print(get_daily_english())
+    emit(try_sources([src_zenquotes, src_qqsuu]))
