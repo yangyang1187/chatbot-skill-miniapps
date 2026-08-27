@@ -39,6 +39,10 @@ Agent 拿到 JSON 后把 `text` 发给用户、把 `images` 里的 URL 作为图
 | `励志英语` | 每日励志英文名言 | zenquotes |
 | `舔狗日记` | 随机一条日记 | 60s API |
 | `骚话` | 随机一句话 | hitokoto |
+| `弱智吧问答` | 随机一条弱智吧经典问答 | 内置语料 |
+| `藏头诗 <文字>` | 生成藏头诗（最多4字） | 内置语料 |
+| `运气 [星座]` | 抽今日运势签 | 内置语料 |
+| `摸头 <QQ号>` | 生成 rua 头像 GIF | q.qlogo.cn + 本地合成 |
 | `二次元图片` | 随机高清二次元图片 | dmoe.cc |
 | `随机头像` | 随机动漫头像 | QQ 头像 |
 | `猫猫图片` | 随机一张猫猫图片 | thecatapi |
@@ -75,7 +79,6 @@ python3 tools/run_miniapp.py <仓库路径> <命令名> [参数]
 ```
 ├── tools/run_miniapp.py   # 加固版运行器（核心入口）
 ├── data/                  # 小程序脚本（命令名=文件名）
-├── data/deprecated/       # 上游API失效的小程序（藏头诗/运气/弱智吧问答/摸头）
 ├── legacy/qchatgpt-plugin/# 旧版 QChatGPT 插件适配层（可选）
 └── requirements.txt
 ```
