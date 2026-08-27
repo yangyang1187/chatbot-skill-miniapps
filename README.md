@@ -48,7 +48,10 @@ Agent 拿到 JSON 后把 `text` 发给用户、把 `images` 里的 URL 作为图
 | `猫猫图片` | 随机一张猫猫图片 | thecatapi |
 | `必应壁纸 [偏移]` | 必应每日壁纸 | Bing 官方 |
 
-画图类（`画图DALL·E-3` / `画图OpenAI`）需自备 API key。
+画图类需自备 API key（未配置时会提示缺什么）：
+- `画图DALL·E-3` → 环境变量 `DALLE_API_KEY` + `DALLE_API_URL`
+- `画图OpenAI` → 环境变量 `OPENAI_API_HOST` + `OPENAI_API_KEY`
+- `画图ideogram版` → 环境变量 `IDEOGRAM_API_URL` + `IDEOGRAM_API_KEY`
 
 ## 给 Agent 接入
 
