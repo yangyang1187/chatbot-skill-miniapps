@@ -101,6 +101,19 @@ pip install -r requirements.txt
 if cleaned_text.startswith('/'):  # 改成你想要的前缀，如 'AAA'
 ```
 
+## 独立运行（不依赖 QChatGPT）
+
+仓库自带加固版运行器 `tools/run_miniapp.py`，可以直接在命令行跑任意小程序：
+
+```bash
+python3 tools/run_miniapp.py . 天气 北京
+python3 tools/run_miniapp.py . 塔罗牌
+python3 tools/run_miniapp.py . 必应壁纸
+```
+
+输出 JSON：`{"ok": true, "command": ..., "text": ..., "images": [...]}`，方便接入其他机器人框架或脚本。
+运行器强制执行与插件相同的安全规则：命令名白名单、路径穿越防护、60 秒超时、参数不走 shell。
+
 ## 安全说明
 
 ⚠️ 本插件会以机器人权限执行 `data/` 目录下的任意 Python 脚本。请勿放入来源不明的脚本。
