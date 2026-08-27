@@ -3,10 +3,16 @@ import os
 import random
 import sys
 
+API_URL = os.environ.get("IDEOGRAM_API_URL", "你的api路劲")
+API_KEY = os.environ.get("IDEOGRAM_API_KEY", "你的api key")
+
+
 def generate_image(prompt: str):
-    url = '你的api路劲'
+    if "你的api" in API_URL or "你的api" in API_KEY:
+        return "未配置 ideogram API：请设置环境变量 IDEOGRAM_API_URL 和 IDEOGRAM_API_KEY"
+    url = API_URL
     headers = {
-        'Authorization': 'Bearer 你的api key',#完整格式"Bearer sk-123123123123123"
+        'Authorization': f'Bearer {API_KEY}',  # 完整格式"Bearer sk-123...3123"
         'Content-Type': 'application/json',
     }
 

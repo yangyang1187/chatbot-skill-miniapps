@@ -5,12 +5,15 @@ import sys  # 导入 sys 库用于访问命令行参数
 
 # 调用OpenAI格式API优化提示词和生成图片
 
-HOST = "http://127.0.0.1:3001" # 设置 API 主机地址
-API_KEY = "sk-xxx" # 你的 API 密钥
+HOST = os.environ.get("OPENAI_API_HOST", "http://127.0.0.1:3001") # 设置 API 主机地址
+API_KEY = os.environ.get("OPENAI_API_KEY", "sk-xxx") # 你的 API 密钥
 IMAGE_MODEL = "FLUX.1-dev" #生图模型
 PROMPT_MODEL = "deepseek-chat" #提示词优化模型
 
 def generate_image(prompt, size, steps):
+    if "sk-xxx" in API_KEY or "127.0.0.1:3001" in HOST:
+        print("未配置 OpenAI 格式 API：请设置环境变量 OPENAI_API_HOST 和 OPENAI_API_KEY")
+        return None
     prompt = generate_prompt(prompt)
     # 定义生成图像的函数
     url = HOST + "/v1/images/generations"  # 设置 API 端点 URL

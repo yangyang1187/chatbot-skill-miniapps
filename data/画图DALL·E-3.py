@@ -43,8 +43,14 @@ if len(sys.argv) < 2:  # 检查是否提供了提示词
 
 prompt = sys.argv[1]  # 获取命令行参数中的提示词
 
+# 从环境变量读取 API 配置
+api_key = os.environ.get("DALLE_API_KEY", "你的 API 密钥")
+api_url = os.environ.get("DALLE_API_URL", "设置 API 端点 URL")
+if "你的 API 密钥" in api_key or "设置 API 端点" in api_url:
+    print("未配置 DALL·E API：请设置环境变量 DALLE_API_KEY 和 DALLE_API_URL")
+    sys.exit(0)
+
 # 示例调用
-api_key = "你的 API 密钥"  # 你的 API 密钥
 generate_image(
     api_key=api_key,  # 传入 API 密钥
     prompt=prompt,  # 使用命令行传入的提示词
