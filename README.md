@@ -1,126 +1,78 @@
-# XiaocxPlugin
+# chatbot-skill-miniapps
 
-> 一个用于 [QChatGPT](https://github.com/RockChinQ/QChatGPT) 的小程序加载器插件，往 `data/` 目录丢一个 `.py` 文件，群里发 `/文件名` 即可调用，无需重启。
+> 给 AI Agent / 聊天机器人直接调用的小程序技能包：天气、塔罗牌、必应壁纸、猫猫图片等 12+ 个即用命令，配套加固版安全运行器，一条命令即可调用，输出结构化 JSON。
 
-## 更新日志
+## 这是什么
 
-### 0.3（本 fork，2026-08）
-
-**安全加固**
-- 命令名白名单校验 + 路径穿越双重防护（原版存在 `/../` 任意脚本执行漏洞）
-- `sys.executable` 替代硬编码 `python`（修复只有 `python3` 的环境）
-- 超时处理、空输出提示、队列消费竞态修复
-
-**修复失效 API**（原版依赖的第三方接口大面积失效）
-- 天气 → 无 token 自动降级 [wttr.in](https://wttr.in)，支持 `ALAPI_TOKEN` 环境变量
-- 二次元图片 → dmoe.cc｜随机头像 → QQ 头像服务｜励志英语 → zenquotes
-- 骚话 → hitokoto｜舔狗日记 → 60s API｜必应壁纸 → Bing 官方接口（带重试）
-- 补全 `requirements.txt`（原为空）
-
-**移除无可用源的小程序**（移入 `data/deprecated/`）
-- 藏头诗、运气（星座运势）、弱智吧问答、摸头 —— 上游 API 已停止服务
-
-### 0.2（原版）
-更新了文档对部分小插件的使用讲解和图片示例
-
-## 安装
-
-配置完成 [QChatGPT](https://github.com/RockChinQ/QChatGPT) 主程序后，使用管理员账号向机器人发送命令：
-
-```
-!plugin get https://github.com/yangyang1187/XiaocxPlugin.git
-```
-
-或查看详细的[插件安装说明](https://github.com/RockChinQ/QChatGPT/wiki/5-%E6%8F%92%E4%BB%B6%E4%BD%BF%E7%94%A8)
-
-安装依赖：
-
-```bash
-pip install -r requirements.txt
-```
-
-## 命令列表
-
-### 可用命令（已实测，2026-08）
-
-| 命令 | 说明 | 数据源 |
-|---|---|---|
-| `/天气 北京` | 查询城市天气（默认北京） | wttr.in / alapi |
-| `/塔罗牌` | 随机抽取塔罗牌 | oiapi |
-| `/BA 你好` | 生成自定义 BA logo 图片 | oiapi |
-| `/kfc` | 生成疯狂星期四文案（一次两条） | ahfi |
-| `/今天吃什么` | 随机推荐今天吃什么 | aa1 |
-| `/励志英语` | 每日励志英文名言 | zenquotes |
-| `/舔狗日记` | 随机生成舔狗日记 | 60s API |
-| `/骚话` | 随机一句话 | hitokoto |
-| `/二次元图片` | 随机高清二次元图片 | dmoe.cc |
-| `/随机头像` | 随机动漫头像 | QQ 头像 |
-| `/猫猫图片` | 随机一张猫猫图片 | thecatapi |
-| `/必应壁纸` | 必应每日壁纸（可加天数偏移） | Bing 官方 |
-
-### AI 绘图（需自备 API key）
-
-调用 DALL·E-3 绘图，需要自己配置 API key 和地址：
-
-```
-/画图DALL·E-3 一只可爱的猫娘
-```
-
-另有 `/画图OpenAI` 版本。觉得命令太长可修改 `main.py` 中的前缀。
-
-### 已停用（`data/deprecated/`）
-
-上游 API 已停止服务，暂不可用：藏头诗、运气（星座运势）、弱智吧问答、摸头
-
-### R18 命令（谨慎使用）
-
-`/色图` `/真色图` `/看妹妹` `/看腿` —— 真的会返回 R18 内容，请注意场合！仅用于代码学习展示。
-
-## 使用与开发
-
-这是一个小程序加载器插件，`data/` 目录内的每个 `.py` 文件就是一个小程序。
-
-### 添加自己的小程序
-
-1. 写一个 `.py` 文件（只支持文本和图片输出）
-2. 放到 `QChatGPT/plugins/XiaocxPlugin/data/` 目录
-3. 群里发 `/文件名` 即可使用（无需重启）
-
-文本类参考 `天气.py`，图片类参考 `猫猫图片.py`。
-
-### 输出协议
-
-- 文本：直接 `print()` 即可
-- 图片：输出 Markdown 图片格式 `![描述](https://...)` 会被自动转为图片消息
-
-### 修改命令前缀
-
-如果 `/` 与其他插件冲突，修改 `main.py` 中：
-
-```python
-if cleaned_text.startswith('/'):  # 改成你想要的前缀，如 'AAA'
-```
-
-## 独立运行（不依赖 QChatGPT）
-
-仓库自带加固版运行器 `tools/run_miniapp.py`，可以直接在命令行跑任意小程序：
+每个小程序是 `data/` 目录下一个独立的 Python 脚本，由 `tools/run_miniapp.py` 安全运行：
 
 ```bash
 python3 tools/run_miniapp.py . 天气 北京
-python3 tools/run_miniapp.py . 塔罗牌
-python3 tools/run_miniapp.py . 必应壁纸
+# {"ok": true, "command": "天气", "text": "北京: 多云 +26°C ...", "images": []}
 ```
 
-输出 JSON：`{"ok": true, "command": ..., "text": ..., "images": [...]}`，方便接入其他机器人框架或脚本。
-运行器强制执行与插件相同的安全规则：命令名白名单、路径穿越防护、60 秒超时、参数不走 shell。
+Agent 拿到 JSON 后把 `text` 发给用户、把 `images` 里的 URL 作为图片发送即可。
 
-## 安全说明
+## 命令列表（已实测）
 
-⚠️ 本插件会以机器人权限执行 `data/` 目录下的任意 Python 脚本。请勿放入来源不明的脚本。
+| 命令 | 说明 | 数据源 |
+|---|---|---|
+| `天气 <城市>` | 查询城市天气（默认北京） | wttr.in / alapi |
+| `塔罗牌` | 随机抽取塔罗牌（文+图） | oiapi |
+| `BA <文字>` | 生成自定义 BA logo 图片 | oiapi |
+| `kfc` | 疯狂星期四文案（一次两条） | ahfi |
+| `今天吃什么` | 随机推荐今天吃什么 | aa1 |
+| `励志英语` | 每日励志英文名言 | zenquotes |
+| `舔狗日记` | 随机一条日记 | 60s API |
+| `骚话` | 随机一句话 | hitokoto |
+| `二次元图片` | 随机高清二次元图片 | dmoe.cc |
+| `随机头像` | 随机动漫头像 | QQ 头像 |
+| `猫猫图片` | 随机一张猫猫图片 | thecatapi |
+| `必应壁纸 [偏移]` | 必应每日壁纸 | Bing 官方 |
 
-本 fork 已加固：命令名白名单 + 路径穿越防护，但 `data/` 目录本身的写入权限仍需自行管控。
+画图类（`画图DALL·E-3` / `画图OpenAI`）需自备 API key。
 
-## 上游
+## 给 Agent 接入
 
-- 原项目：[sanxianxiaohuntun/XiaocxPlugin](https://github.com/sanxianxiaohuntun/XiaocxPlugin)
-- 本 fork：[yangyang1187/XiaocxPlugin](https://github.com/yangyang1187/XiaocxPlugin)
+### 方式一：命令行调用（任何 Agent）
+
+```bash
+python3 tools/run_miniapp.py <仓库路径> <命令名> [参数]
+```
+
+输出 JSON：`{"ok": bool, "command": str, "text": str, "images": [url], "error": str}`
+
+### 方式二：Hermes Agent 技能
+
+配套技能 `xiaocx-miniapp-runner` 已封装调用流程，Agent 收到「抽个塔罗牌」「北京天气」类请求时自动触发。
+
+## 安全特性
+
+- ✅ 命令名白名单校验（拒绝路径分隔符、注入字符）
+- ✅ 路径穿越双重防护（realpath 校验必须落在 `data/` 内）
+- ✅ 参数以 argv 传递，不走 shell，无注入面
+- ✅ 60 秒超时、结构化错误输出
+- ✅ `sys.executable` 自适应解释器
+
+⚠️ 仍请注意：`data/` 目录下的脚本会以当前用户权限执行，请勿放入来源不明的脚本。
+
+## 目录结构
+
+```
+├── tools/run_miniapp.py   # 加固版运行器（核心入口）
+├── data/                  # 小程序脚本（命令名=文件名）
+├── data/deprecated/       # 上游API失效的小程序（藏头诗/运气/弱智吧问答/摸头）
+├── legacy/qchatgpt-plugin/# 旧版 QChatGPT 插件适配层（可选）
+└── requirements.txt
+```
+
+## 开发新小程序
+
+1. 在 `data/` 新建 `<命令名>.py`
+2. 文本输出直接 `print()`；图片输出 Markdown 格式 `![描述](https://...)`
+3. 文本类参考 `天气.py`，图片类参考 `猫猫图片.py`
+4. 无需注册，放进去就能用
+
+## 上游与致谢
+
+小程序创意与部分代码来自 [sanxianxiaohuntun/XiaocxPlugin](https://github.com/sanxianxiaohuntun/XiaocxPlugin)（v0.2）。本仓库完成了安全加固、失效 API 修复，并重构为 Agent 技能工具。
