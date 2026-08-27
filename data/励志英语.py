@@ -1,19 +1,18 @@
 import requests
 
+
 def get_daily_english():
-    url = "https://api.vvhan.com/api/dailyEnglish?type=sj"
+    url = "https://zenquotes.io/api/today"
     try:
-        response = requests.get(url)
-        response.raise_for_status()  # 确保请求成功
-        data = response.json()
-        
-        # 获取中文和英文内容
-        zh_content = data['data'].get('zh', '未获取到中文内容')
-        en_content = data['data'].get('en', '未获取到英文内容')
-        
-        return f"中文: {zh_content}\n英文: {en_content}"
+        response = requests.get(url, timeout=15)
+        response.raise_for_status()
+        data = response.json()[0]
+        en_content = data.get("q", "未获取到英文内容")
+        author = data.get("a", "")
+        return f"英文: {en_content}\n作者: {author}"
     except requests.RequestException as e:
         return f"请求失败: {str(e)}"
+
 
 if __name__ == "__main__":
     print(get_daily_english())

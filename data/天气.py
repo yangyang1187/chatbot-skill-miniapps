@@ -1,13 +1,35 @@
 import httpx
+import os
 import sys
 import asyncio
 import json
 
+# 可在此填入自己的 alapi token；留空则自动降级为免费接口（信息较简略）
+ALAPI_TOKEN = os.environ.get("ALAPI_TOKEN", "")
+
+
+async def get_weather_free(city: str):
+    """免费天气接口（wttr.in），无需 token，返回简略信息。"""
+    import urllib.parse
+    api_url = f"https://wttr.in/{urllib.parse.quote(city)}"
+    params = {"format": "%l: %C %t (体感 %f) 湿度 %h 风 %w", "lang": "zh"}
+    async with httpx.AsyncClient(timeout=15) as client:
+        response = await client.get(api_url, params=params)
+        response.raise_for_status()
+        text = response.text.strip()
+        if text:
+            return text
+        return "获取天气信息失败，请检查城市名称或稍后再试。"
+
+
 async def get_weather(city: str, raw_data: bool = False):
+    if not ALAPI_TOKEN:
+        return await get_weather_free(city)
+
     api_url = "https://v3.alapi.cn/api/tianqi"
     params = {
         "city": city,
-        "token": "YOUR TOKEN"  # 请替换为有效的token
+        "token": ALAPI_TOKEN  # 支持环境变量 ALAPI_TOKEN 或直接在此填写
     }
 
     async with httpx.AsyncClient() as client:
