@@ -24,12 +24,18 @@ IMAGE_PATTERN = re.compile(r'!\[.*?\]\((https?://\S+)\)')
 
 def main():
     if len(sys.argv) < 3:
-        print(json.dumps({"ok": False, "error": "usage: run_miniapp.py <repo_path> <command> [args...]"}, ensure_ascii=False))
+        print(json.dumps({"ok": False, "error": "usage: run_miniapp.py <repo_path> <command|--list> [args...]"}, ensure_ascii=False))
         return 2
 
     repo = os.path.realpath(sys.argv[1])
     command = sys.argv[2]
     args = " ".join(sys.argv[3:])
+
+    if command == "--list":
+        data_dir = os.path.join(repo, "data")
+        names = sorted(f[:-3] for f in os.listdir(data_dir) if f.endswith(".py") and f != "模板.py") if os.path.isdir(data_dir) else []
+        print(json.dumps({"ok": True, "commands": names}, ensure_ascii=False))
+        return 0
 
     if not command or not SAFE_COMMAND_NAME.match(command):
         print(json.dumps({"ok": False, "command": command, "error": "非法命令名"}, ensure_ascii=False))

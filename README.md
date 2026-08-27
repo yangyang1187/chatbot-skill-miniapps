@@ -2,6 +2,22 @@
 
 > 给 AI Agent / 聊天机器人直接调用的小程序技能包：天气、塔罗牌、必应壁纸、猫猫图片等 12+ 个即用命令，配套加固版安全运行器，一条命令即可调用，输出结构化 JSON。
 
+## 🚀 一句话安装（把下面这句发给你的 AI Agent）
+
+> 帮我安装 chatbot-skill-miniapps 技能：执行 `bash <(curl -fsSL https://raw.githubusercontent.com/yangyang1187/chatbot-skill-miniapps/main/install.sh)` 完成克隆、装依赖和冒烟测试；之后当我说"天气/塔罗牌/今天吃什么/必应壁纸"等命令时，用 `python3 ~/chatbot-skill-miniapps/tools/run_miniapp.py ~/chatbot-skill-miniapps <命令> [参数]` 运行并把 JSON 里的 text 发给我、images 里的图片发出来。
+
+Agent 收到这句话后会：
+1. 运行 `install.sh`（克隆仓库 → 安装 requests/httpx → 冒烟测试）
+2. 之后你说「北京天气」「抽个塔罗牌」「今天吃什么」，Agent 就跑对应命令并把结果发给你
+
+### 手动安装（不用 Agent 也行）
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/yangyang1187/chatbot-skill-miniapps/main/install.sh)
+# 或
+git clone https://github.com/yangyang1187/chatbot-skill-miniapps.git && cd chatbot-skill-miniapps && bash install.sh
+```
+
 ## 这是什么
 
 每个小程序是 `data/` 目录下一个独立的 Python 脚本，由 `tools/run_miniapp.py` 安全运行：
