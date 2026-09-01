@@ -8,7 +8,7 @@ import os
 import re
 import sys
 
-from _multisource import emit, try_sources
+from _multisource import emit, try_sources, fetch_json
 
 AJAX_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -96,12 +96,53 @@ def format_illust(body, page):
     return "\n".join(lines)
 
 
+def fetch_random(r18):
+    """无参数时：从 lolicon(Pixiv原图反代) 随机取一张。r18: 0=非R18, 1=R18, 2=混。"""
+    import random
+    params = {"num": 1, "r18": r18}
+    # 随机切换代理域名，提高存活率
+    api_hosts = ["https://api.lolicon.app/setu/v2",
+                 "https://api.lolicon.app/setu/v2"]
+    data = None
+    for host in api_hosts:
+        try:
+            data = fetch_json(host, params=params)
+            if data and not data.get("error"):
+                break
+        except Exception:
+            continue
+    if not data or not data.get("data"):
+        return None
+    it = data["data"][0]
+    tags = "、".join((it.get("tags") or [])[:8])
+    url = (it.get("urls") or {}).get("original") or (it.get("urls") or {}).get("regular")
+    if not url:
+        return None
+    # 统一保证走反代，客户端不带 Referer 也能显示
+    url = url.replace("i.pximg.net", "i.pixiv.re")
+    r18flag = " 🔞R-18" if it.get("r18") else ""
+    lines = [
+        f"🎨 {it.get('title', '无标题')}{r18flag}",
+        f"作者：{it.get('author', '未知')}",
+    ]
+    if tags:
+        lines.append(f"标签：{tags}")
+    lines.append(f"原地址：https://www.pixiv.net/artworks/{it.get('pid', '')}")
+    lines.append(f"![{it.get('title', '')}]({url})")
+    return "\n".join(lines)
+
+
 if __name__ == "__main__":
     raw = sys.argv[1].strip() if len(sys.argv) > 1 and sys.argv[1].strip() else ""
-    if not raw:
-        print("用法：pixiv图 <插画ID或URL> [页码]，例如 pixiv图 121292560 或 pixiv图 https://www.pixiv.net/artworks/121292560 2")
-        sys.exit(2)
+    if not raw or re.match(r"(随机|random|随)", raw, re.IGNORECASE):
+        # 随机模式：无参或「随机」开头；跟上 r18/黄/色 字眼则抽 R-18
+        r18 = 1 if re.search(r"r18|黄|色", raw, re.IGNORECASE) else 0
+        emit(try_sources([lambda: fetch_random(r18), lambda: fetch_random(0)]))
+        sys.exit(0)
     illust_id, page = parse_args(raw)
+    if not illust_id:
+        print("没能从参数里解析出插画 ID，请给数字 ID 或 pixiv 作品链接，或直接输入「pixiv图 随机」")
+        sys.exit(2)
     if not illust_id:
         print("没能从参数里解析出插画 ID，请给数字 ID 或 pixiv 作品链接")
         sys.exit(2)
