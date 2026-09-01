@@ -1,6 +1,9 @@
-"""轮盘赌（qqBot 移植，纯本地无依赖）
-左轮 6 弹仓 1 颗子弹，第一枪空仓可继续"扣扳机"或"认输"。
+"""轮盘赌（qqBot 移植，纯本地无依赖，支持跨调用续局）
+左轮 6 弹仓 1 颗子弹。开局随机定子弹弹仓，之后「继续」在同一把枪上依次推进，
+直到命中或 6 枪全空。状态持久化到临时文件，跨会话可续。
 """
+import json
+import os
 import random
 import sys
 
@@ -25,25 +28,67 @@ DEAD_LINES = [
     "第 {n} 枪，子弹没有留情，一路走好。",
 ]
 
+STATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".roulette_state.json")
 
-def play(continue_after_miss=False):
-    bullet = random.randint(1, 6)
-    lines = ["🎰 轮盘赌开始：6 个弹仓，1 颗子弹。"]
-    for n in range(1, 7):
-        lines.append(f"\n第 {n} 枪：{random.choice(TAUNTS)}……")
-        if n == bullet:
-            lines.append(f"\n💀 {random.choice(DEAD_LINES).format(n=n)}")
-            if n > 1:
-                lines.append("生存 {n} 枪，虽败犹荣。".format(n=n - 1))
-            return "\n".join(lines)
-        lines.append("咔——空枪！")
-        if not continue_after_miss:
-            lines.append("\n👉 回复「轮盘赌 继续」接着扣扳机，或就此收手认怂。")
-            return "\n".join(lines)
-    lines.append("\n" + random.choice(WIN_LINES).format(n=6))
+
+def load_state():
+    try:
+        with open(STATE_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def save_state(s):
+    try:
+        with open(STATE_PATH, "w", encoding="utf-8") as f:
+            json.dump(s, f, ensure_ascii=False)
+    except Exception:
+        pass
+
+
+def clear_state():
+    try:
+        os.remove(STATE_PATH)
+    except Exception:
+        pass
+
+
+def shot(state):
+    """扣一枪：state = {bullet, fired}，fired 为已开枪数，返回本枪结果文本或 None(未结束)。"""
+    bullet = state["bullet"]
+    fired = state["fired"] + 1
+    state["fired"] = fired
+
+    lines = [f"\n第 {fired} 枪：{random.choice(TAUNTS)}……"]
+    if fired == bullet:
+        lines.append(f"\n💀 {random.choice(DEAD_LINES).format(n=fired)}")
+        if fired > 1:
+            lines.append(f"生存 {fired - 1} 枪，虽败犹荣。")
+        clear_state()
+        return "\n".join(lines)
+    if fired >= 6:
+        clear_state()
+        lines.append("\n" + random.choice(WIN_LINES).format(n=6))
+        return "\n".join(lines)
+    lines.append("咔——空枪！")
+    save_state(state)
+    lines.append("\n👉 回复「轮盘赌 继续」接着扣扳机，或就此收手认怂。")
     return "\n".join(lines)
+
+
+def play(mode=None):
+    if mode and "继续" in mode:
+        state = load_state()
+        if not state:
+            return "🎰 没有进行中的对局。先回复「轮盘赌」开一把。"
+        return shot(state)
+
+    # 开局：随机定子弹弹仓
+    state = {"bullet": random.randint(1, 6), "fired": 0}
+    return "🎰 轮盘赌开始：6 个弹仓，1 颗子弹。" + shot(state)
 
 
 if __name__ == "__main__":
     mode = sys.argv[1].strip() if len(sys.argv) > 1 and sys.argv[1].strip() else None
-    print(play(continue_after_miss=bool(mode)))
+    print(play(mode))
