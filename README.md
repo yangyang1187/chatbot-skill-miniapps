@@ -50,7 +50,7 @@ Agent 拿到 JSON 后把 `text` 发给用户、把 `images` 里的 URL 作为图
 | `轮盘赌 [继续]` | 左轮轮盘赌（6 弹仓 1 子弹，可继续扣扳机） | 内置逻辑 |
 | `明日方舟十连 [次数]` | 明日方舟寻访模拟（1-60 连，标准池概率） | 内置语料 |
 | `搜图 <图片URL>` | 以图搜图，返回番剧标题/集数/相似度与命中画面 | trace.moe / saucenao |
-| `pixiv图 <ID或URL> [页码]` | 查询 Pixiv 插画（标题/作者/标签/原图，多页可翻页） | pixiv ajax + i.pixiv.re 反代 |
+| `pixiv图 [id或URL] [页码]` | Pixiv 插画：给 ID/链接查原图（标题/作者/标签/多页可翻）；不带参数则随机抽一张（`随机r18`=R-18） | pixiv ajax + i.pixiv.re 反代 / lolicon(随机) |
 | `B站直播 <房间号>` | 查询 B 站直播间状态/分区/人气（直播中附画面截图） | bilibili API |
 
 > 💡 聊天里用搜图：qqBot 式「回复图片+输入搜图」的等价做法是——Agent 看到对话中被回复/附带的图片后，
@@ -61,7 +61,7 @@ Agent 拿到 JSON 后把 `text` 发给用户、把 `images` 里的 URL 作为图
 - `画图OpenAI` → 环境变量 `OPENAI_API_HOST` + `OPENAI_API_KEY`
 - `画图ideogram版` → 环境变量 `IDEOGRAM_API_URL` + `IDEOGRAM_API_KEY`
 - `搜图` 的 saucenao 备选源 → 环境变量 `SAUCENAO_API_KEY`（不配置也能用免 key 的 trace.moe）
-- `pixiv图` → 环境变量 `PIXIV_PHPSESSID`（可选，看 R-18 作品时需要；公开作品不用配）
+- `pixiv图` → 环境变量 `PIXIV_PHPSESSID`（可选，看 R-18 作品时需要；公开作品不用配；随机模式抽 R-18 走 lolicon 不需要它）
 
 ## 给 Agent 接入
 
@@ -105,7 +105,7 @@ python3 tools/run_miniapp.py <仓库路径> <命令名> [参数]
 | 色图(搜图) | safebooru | jitsu | dmoe |
 | 搜图(以图搜图) | trace.moe | saucenao(需key) | - |
 | B站直播 | Room/get_info | Room/room_playing | - |
-| pixiv图 | pixiv ajax(公开作品免登录) | i.pixiv.re 反代 | i.pixiv.cat 反代 |
+| pixiv图 | 按ID: pixiv ajax(公开作品免登录) | 随机: lolicon API(真实Pixiv原图/免登录) | i.pixiv.re 反代 |
 
 文本类命令（弱智吧问答/藏头诗/运气/摸头/轮盘赌/明日方舟十连）为纯本地实现，天然永不失效。
 公共库：`data/_multisource.py`，新增数据源只需加一个函数进 `try_sources` 列表。
