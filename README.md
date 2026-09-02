@@ -146,7 +146,6 @@ bash skills/xiaocx-miniapp/scripts/runner.sh <命令名> [参数...]
 ├── skills/xiaocx-miniapp/  # 通用 Agent 技能包（SKILL.md + runner.sh）
 │   └── scripts/runner.sh   # 通用调用入口，自动定位仓库与解释器
 ├── data/                   # 小程序脚本（命令名=文件名）
-├── legacy/qchatgpt-plugin/ # 旧版 QChatGPT 插件适配层（可选）
 ├── install.sh              # 安装脚本
 └── requirements.txt
 ```
