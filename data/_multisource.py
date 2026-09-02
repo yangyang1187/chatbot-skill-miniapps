@@ -35,34 +35,45 @@ def try_sources(sources):
     return None
 
 
+RETRY_TIMES = 3
+RETRY_WAIT = 0.8  # 秒；部分网络环境下 TLS 握手会间歇性被重置，重试基本能救回来
+
+
+def _get(url, params, timeout):
+    """带重试的 GET，返回 Response；重试间留出短暂间隔。"""
+    import time
+    last_err = None
+    for attempt in range(RETRY_TIMES):
+        try:
+            if requests is not None:
+                return requests.get(url, params=params, timeout=timeout,
+                                    headers={"User-Agent": "Mozilla/5.0 chatbot-miniapp/1.0"})
+            if httpx is not None:
+                return httpx.get(url, params=params, timeout=timeout,
+                                 follow_redirects=True,
+                                 headers={"User-Agent": "Mozilla/5.0 chatbot-miniapp/1.0"})
+            raise RuntimeError("需要 requests 或 httpx 库")
+        except RuntimeError:
+            raise
+        except Exception as e:
+            last_err = e
+            if attempt < RETRY_TIMES - 1:
+                time.sleep(RETRY_WAIT)
+    raise last_err
+
+
 def fetch_json(url, params=None, timeout=DEFAULT_TIMEOUT):
-    """GET 请求返回 JSON，失败返回 None。"""
-    if requests is not None:
-        r = requests.get(url, params=params, timeout=timeout,
-                         headers={"User-Agent": "Mozilla/5.0 chatbot-miniapp/1.0"})
-        r.raise_for_status()
-        return r.json()
-    if httpx is not None:
-        r = httpx.get(url, params=params, timeout=timeout, follow_redirects=True,
-                      headers={"User-Agent": "Mozilla/5.0 chatbot-miniapp/1.0"})
-        r.raise_for_status()
-        return r.json()
-    raise RuntimeError("需要 requests 或 httpx 库")
+    """GET 请求返回 JSON，失败抛异常（由 try_sources 兜底）。"""
+    r = _get(url, params, timeout)
+    r.raise_for_status()
+    return r.json()
 
 
 def fetch_text(url, params=None, timeout=DEFAULT_TIMEOUT):
-    """GET 请求返回文本，失败返回 None。"""
-    if requests is not None:
-        r = requests.get(url, params=params, timeout=timeout,
-                         headers={"User-Agent": "Mozilla/5.0 chatbot-miniapp/1.0"})
-        r.raise_for_status()
-        return r.text.strip()
-    if httpx is not None:
-        r = httpx.get(url, params=params, timeout=timeout, follow_redirects=True,
-                      headers={"User-Agent": "Mozilla/5.0 chatbot-miniapp/1.0"})
-        r.raise_for_status()
-        return r.text.strip()
-    raise RuntimeError("需要 requests 或 httpx 库")
+    """GET 请求返回文本，失败抛异常（由 try_sources 兜底）。"""
+    r = _get(url, params, timeout)
+    r.raise_for_status()
+    return r.text.strip()
 
 
 def valid_image(url, timeout=DEFAULT_TIMEOUT):

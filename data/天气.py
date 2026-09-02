@@ -1,4 +1,4 @@
-"""天气查询（多源）：alapi(需token) → wttr.in → open-meteo(免key)"""
+"""天气查询（多源）：alapi(需token) → open-meteo(免key) → wttr.in"""
 import sys
 import os
 import urllib.parse
@@ -32,7 +32,10 @@ def src_alapi(city):
 def src_wttr(city):
     text = fetch_text(f"https://wttr.in/{urllib.parse.quote(city)}",
                       {"format": "%l: %C %t (体感 %f) 湿度 %h 风 %w", "lang": "zh"})
-    return text if text and text != "Sorry" else None
+    # 浏览器型 UA 下 wttr.in 会无视 format 返回整页 HTML，视为失败
+    if not text or text == "Sorry" or "<" in text[:200]:
+        return None
+    return text
 
 
 def src_open_meteo(city):
@@ -56,6 +59,6 @@ if __name__ == "__main__":
     city = sys.argv[1].strip() if len(sys.argv) > 1 and sys.argv[1].strip() else "北京"
     emit(try_sources([
         lambda: src_alapi(city),
-        lambda: src_wttr(city),
         lambda: src_open_meteo(city),
+        lambda: src_wttr(city),
     ]))
