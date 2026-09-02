@@ -63,19 +63,25 @@ Agent 拿到 JSON 后把 `text` 发给用户、把 `images` 里的 URL 作为图
 - `搜图` 的 saucenao 备选源 → 环境变量 `SAUCENAO_API_KEY`（不配置也能用免 key 的 trace.moe）
 - `pixiv图` → 环境变量 `PIXIV_PHPSESSID`（可选，看 R-18 作品时需要；公开作品不用配；随机模式抽 R-18 走 lolicon 不需要它）
 
-## 给 Agent 接入
+## 给 Agent 接入（客户端无关）
 
 ### 方式一：命令行调用（任何 Agent）
 
 ```bash
-python3 tools/run_miniapp.py <仓库路径> <命令名> [参数]
+bash skills/xiaocx-miniapp/scripts/runner.sh <命令名> [参数]
 ```
 
+通用入口会自动定位仓库路径和解释器（优先 `.venv`，也可用 `XIAOCX_HOME` 指定仓库位置）。
 输出 JSON：`{"ok": bool, "command": str, "text": str, "images": [url], "error": str}`
 
-### 方式二：Hermes Agent 技能
+### 方式二：标准 Agent 技能（ZCode / Claude Code 等，推荐）
 
-配套技能 `xiaocx-miniapp-runner` 已封装调用流程，Agent 收到「抽个塔罗牌」「北京天气」类请求时自动触发。
+仓库自带标准技能包 `skills/xiaocx-miniapp/`（SKILL.md + runner.sh），客户端自动发现即可触发。
+`install.sh` 会自动把它复制到 `~/.agents/skills/xiaocx-miniapp`——装完用户直接说「北京天气」「抽个塔罗牌」「来发十连」即可，无需任何客户端特定配置。
+
+### 方式三：Hermes Agent 技能
+
+旧版 Hermes 适配技能 `xiaocx-miniapp-runner` 仍可用，行为与方式二一致。
 
 ## 安全特性
 
@@ -117,6 +123,7 @@ python3 tools/run_miniapp.py <仓库路径> <命令名> [参数]
 ```
 ├── tools/run_miniapp.py   # 加固版运行器（核心入口）
 ├── data/                  # 小程序脚本（命令名=文件名）
+├── skills/xiaocx-miniapp/ # 通用 Agent 技能包（SKILL.md + runner.sh，install.sh 自动装到 ~/.agents/skills）
 ├── legacy/qchatgpt-plugin/# 旧版 QChatGPT 插件适配层（可选）
 └── requirements.txt
 ```
