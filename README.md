@@ -61,7 +61,7 @@ Agent 拿到 JSON 后把 `text` 发给用户、把 `images` 里的 URL 作为图
 - `画图OpenAI` → 环境变量 `OPENAI_API_HOST` + `OPENAI_API_KEY`
 - `画图ideogram版` → 环境变量 `IDEOGRAM_API_URL` + `IDEOGRAM_API_KEY`
 - `搜图` 的 saucenao 备选源 → 环境变量 `SAUCENAO_API_KEY`（不配置也能用免 key 的 trace.moe）
-- `pixiv图` → 环境变量 `PIXIV_PHPSESSID`（可选，看 R-18 作品时需要；公开作品不用配；随机模式抽 R-18 走 lolicon 不需要它）
+- `pixiv图` → 环境变量 `PIXIV_PHPSESSID`（可选，看 R-18 作品时需要；公开作品不用配；随机模式抽 R-18 走 lolicon 不需要它）。未设 env 时会回退读本地 `~/.hermes/pixiv.env`；R-18 作品需登录态，否则接口返回错误。
 
 ## 给 Agent 接入（客户端无关）
 

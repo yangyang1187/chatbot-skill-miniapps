@@ -40,10 +40,27 @@ def parse_args(raw):
     return illust_id, page
 
 
+def load_sess():
+    sess = os.environ.get("PIXIV_PHPSESSID")
+    if sess:
+        return sess
+    # 回退：本地凭据文件（不入 git）
+    try:
+        p = os.path.expanduser("~/.hermes/pixiv.env")
+        with open(p, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("PIXIV_PHPSESSID="):
+                    return line.split("=", 1)[1].strip()
+    except Exception:
+        pass
+    return None
+
+
 def fetch_illust(illust_id):
     import httpx
     headers = dict(AJAX_HEADERS)
-    sess = os.environ.get("PIXIV_PHPSESSID")
+    sess = load_sess()
     if sess:
         headers["Cookie"] = f"PHPSESSID={sess}"
     with httpx.Client(timeout=20, follow_redirects=True, headers=headers) as client:
