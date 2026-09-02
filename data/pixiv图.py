@@ -113,15 +113,13 @@ def format_illust(body, page):
     return "\n".join(lines)
 
 
-def fetch_random(r18):
-    """无参数时：从 lolicon(Pixiv原图反代) 随机取一张。r18: 0=非R18, 1=R18, 2=混。"""
-    import random
+def _lolicon(r18, tag=None):
+    """lolicon 随机接口，返回原始数据项 it；r18:0=非R18,1=R18,2=混。"""
     params = {"num": 1, "r18": r18}
-    # 随机切换代理域名，提高存活率
-    api_hosts = ["https://api.lolicon.app/setu/v2",
-                 "https://api.lolicon.app/setu/v2"]
+    if tag:
+        params["tag"] = tag
     data = None
-    for host in api_hosts:
+    for host in ["https://api.lolicon.app/setu/v2"]:
         try:
             data = fetch_json(host, params=params)
             if data and not data.get("error"):
@@ -130,7 +128,25 @@ def fetch_random(r18):
             continue
     if not data or not data.get("data"):
         return None
-    it = data["data"][0]
+    return data["data"][0]
+
+
+def fetch_random_url(r18=0, tag=None):
+    """返回随机 Pixiv 原图 URL（走 i.pixiv.re 反代），失败返回 None。"""
+    it = _lolicon(r18, tag)
+    if not it:
+        return None
+    url = (it.get("urls") or {}).get("original") or (it.get("urls") or {}).get("regular")
+    if not url:
+        return None
+    return url.replace("i.pximg.net", "i.pixiv.re")
+
+
+def fetch_random(r18=0, tag=None):
+    """无参数时：从 lolicon(Pixiv原图反代) 随机取一张。r18: 0=非R18, 1=R18, 2=混。"""
+    it = _lolicon(r18, tag)
+    if not it:
+        return None
     tags = "、".join((it.get("tags") or [])[:8])
     url = (it.get("urls") or {}).get("original") or (it.get("urls") or {}).get("regular")
     if not url:

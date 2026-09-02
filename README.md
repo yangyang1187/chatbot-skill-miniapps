@@ -51,6 +51,7 @@ Agent 拿到 JSON 后把 `text` 发给用户、把 `images` 里的 URL 作为图
 | `明日方舟十连 [次数]` | 明日方舟寻访模拟（1-60 连，标准池概率） | 内置语料 |
 | `搜图 <图片URL>` | 以图搜图，返回番剧标题/集数/相似度与命中画面 | trace.moe / saucenao |
 | `pixiv图 [id或URL] [页码]` | Pixiv 插画：给 ID/链接查原图（标题/作者/标签/多页可翻）；不带参数则随机抽一张（`随机r18`=R-18） | pixiv ajax + i.pixiv.re 反代 / lolicon(随机) |
+| `色图 [关键词]` | Pixiv 随机图（默认 R-18）；带关键词走标签搜索，如 `色图 蒂法` | lolicon API + i.pixiv.re 反代 |
 | `B站直播 <房间号>` | 查询 B 站直播间状态/分区/人气（直播中附画面截图） | bilibili API |
 
 > 💡 聊天里用搜图：qqBot 式「回复图片+输入搜图」的等价做法是——Agent 看到对话中被回复/附带的图片后，
@@ -108,7 +109,7 @@ bash skills/xiaocx-miniapp/scripts/runner.sh <命令名> [参数]
 | 今天吃什么 | aa1 | - | 本地菜库 |
 | kfc | ahfi | qqsuu | 本地语料 |
 | 塔罗牌 | oiapi | - | 本地22张大阿卡纳 |
-| 色图(搜图) | safebooru | jitsu | dmoe |
+| 色图(随机/带关键词) | lolicon tag搜索(r18) | lolicon 随机 r18 | lolicon 随机(普通) |
 | 搜图(以图搜图) | trace.moe | saucenao(需key) | - |
 | B站直播 | Room/get_info | Room/room_playing | - |
 | pixiv图 | 按ID: pixiv ajax(公开作品免登录) | 随机: lolicon API(真实Pixiv原图/免登录) | i.pixiv.re 反代 |
